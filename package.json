@@ -1,0 +1,37 @@
+{
+  "name": "cloudflare-ip-finder",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.5.1",
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@maxmind/geoip2-node": "^3.5.0",
+    "assert": "^2.0.0",
+    "async-mutex": "^0.4.0",
+    "await-mutex": "^1.0.2",
+    "framer-motion": "^10.5.0",
+    "maxmind": "^4.3.8",
+    "react": "^18.2.0",
+    "react-code-section-lib": "^0.1.2",
+    "react-copy-to-clipboard": "^5.1.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.8.0",
+    "react-syntax-highlighter": "^15.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.27",
+    "@types/react-copy-to-clipboard": "^5.0.4",
+    "@types/react-dom": "^18.0.10",
+    "@types/react-syntax-highlighter": "^15.5.6",
+    "@vitejs/plugin-react": "^3.1.0",
+    "typescript": "^4.9.3",
+    "vite": "^4.2.0"
+  }
+}
