@@ -99,6 +99,7 @@ function changeConfigs(
           qs.alpn = alpns[Math.floor(Math.random() * alpns.length)];
           qs.flow = conf.flow ? conf.flow : "";
           qs.path = conf.path;
+          qs.type = conf.type;
 
           conf.name =
             "Nalbekink" +
