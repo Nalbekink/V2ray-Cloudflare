@@ -31,6 +31,7 @@ interface configType {
   flow?: string;
   sni?: string;
   net?: string;
+  type?: string;
 }
 
 function changeConfigs(
