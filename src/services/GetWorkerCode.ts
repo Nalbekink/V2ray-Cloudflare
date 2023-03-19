@@ -1,4 +1,7 @@
 function getWorkerCode(cleanIps: { ip: string; time: number }[]): string {
+  if (cleanIps.length == 0) {
+    return "// No IP Found Yet";
+  }
   const weights: number[] = softmin(cleanIps.map((a) => a.time / 500));
   const ips: string[] = cleanIps.map((a) => a.ip);
   const weightedCleanIPs = sampleMultipleFromDistribution(ips, weights, 100);
