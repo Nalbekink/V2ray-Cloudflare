@@ -4,7 +4,7 @@ function getWorkerCode(cleanIps: { ip: string; time: number }[]): string {
 
 const maxConfigItems = 500
 const maxPerType = 200
-const includeOriginalConfigs = true
+const includeOriginalConfigs = false
 
 const subLinks = [
     "https://raw.githubusercontent.com/freefq/free/master/v2",

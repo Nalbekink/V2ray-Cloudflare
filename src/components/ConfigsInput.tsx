@@ -13,10 +13,13 @@ import {
 import extractConfigs from "../services/CheckFormat.js";
 import { useState, useEffect } from "react";
 import AlpnCheckbox from "./AlpnCheckbox";
+import UserAgentsCheckbox from "./UserAgentsCheckbox";
 
 interface props {
   alpns: string[];
   onAlpnsChange: any;
+  useragents: string[];
+  setUseragents: any;
   configs: any;
   setConfigs: any;
   configCount: number;
@@ -27,6 +30,8 @@ interface props {
 const ConfigsInput = ({
   alpns,
   onAlpnsChange,
+  useragents,
+  setUseragents,
   configs,
   setConfigs,
   configCount,
@@ -82,6 +87,7 @@ const ConfigsInput = ({
         </NumberInput>
       </Tooltip>
       <AlpnCheckbox onChange={(e: string[]) => onAlpnsChange(e)} />
+      <UserAgentsCheckbox onChange={(e: string[]) => setUseragents(e)} />
     </>
   );
 };

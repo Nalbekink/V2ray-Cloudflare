@@ -37,9 +37,9 @@ SyntaxHighlighter.registerLanguage("javascript", js);
 const Form = () => {
   const [ips, setIPs] = useState<string[]>([]);
   const [validIPs, setValidIPs] = useState<{ ip: string; time: number }[]>([]);
-  const [maxIP, setMaxIP] = useState<number>(0);
-  const [pingCount, setPingCount] = useState<number>(0);
-  const [timeout, setTimeout] = useState<number>(0);
+  const [maxIP, setMaxIP] = useState<number>(30);
+  const [pingCount, setPingCount] = useState<number>(5);
+  const [timeout, setTimeout] = useState<number>(1500);
 
   const [configVisible, setConfigVisiblity] = useState<boolean>(false);
   const [configs, setConfigs] = useState<Array<any>>([[], [], []]);
@@ -49,18 +49,23 @@ const Form = () => {
     "http/1.1",
     "h2,http/1.1",
   ]);
+  const [useragents, setUseragents] = useState<string[]>([
+    "chrome",
+    "firefox",
+    "safari",
+    "random",
+    "randomized",
+    "ios",
+    "android",
+    "edge",
+  ]);
+
   const [changedConfigs, setChangedConfigs] = useState<string[]>([]);
 
   const [createWorker, setCreateWorker] = useState<boolean>(false);
   const [isSubmitted, setSubmitted] = useState<boolean>(false);
 
   const toast = useToast();
-
-  useEffect(() => {
-    changedConfigs.map((config) => {
-      console.log(config);
-    });
-  }, [changedConfigs]);
 
   useEffect(() => {
     if (isSubmitted) {
@@ -71,7 +76,8 @@ const Form = () => {
           [...configs[0], ...configs[1], ...configs[2]],
           validIPs,
           configCount,
-          alpns
+          alpns,
+          useragents
         )
           .split(/\n/)
           .slice(0, -1)
@@ -121,6 +127,8 @@ const Form = () => {
           <ConfigsInput
             alpns={alpns}
             onAlpnsChange={setAlpns}
+            useragents = {useragents}
+            setUseragents = {setUseragents}
             configs={configs}
             setConfigs={setConfigs}
             configCount={configCount}
@@ -151,7 +159,7 @@ const Form = () => {
         >
           <Button
             as={"a"}
-            isDisabled={validIPs.length <= 1}
+            isDisabled={validIPs.length < 1}
             colorScheme="orange"
             width="50%"
             borderRadius={20}
@@ -176,10 +184,9 @@ const Form = () => {
           <>
             <Heading p={10}>Configs</Heading>
             {changedConfigs.map((config) => (
-              <CopyToClipboard text={config}>
+              <CopyToClipboard key={`${config}-${Math.random()}-${Math.random()}`} text={config}>
                 <Text
                   as="kbd"
-                  key={config}
                   width="100%"
                   noOfLines={1}
                   cursor={"pointer"}

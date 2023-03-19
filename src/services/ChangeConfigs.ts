@@ -1,69 +1,36 @@
-const useragents = [
-  "chrome",
-  "firefox",
-  "safari",
-  "random",
-  "randomized",
-  "ios",
-  "android",
-  "edge",
-];
-
-const https_ports = [443, 443, 2053, 2083, 2087, 2096, 8443];
-
-interface configType {
-  tls?: string;
-  security?: string;
-  alpn?: string;
-  address?: string;
-  uuid?: string;
-  password?: string;
-  aid?: string | number;
-  port: string;
-  host?: string;
-  fp?: string;
-  ps?: string;
-  path?: string;
-  name?: string;
-  protocol: string;
-  v?: string | number;
-  add?: string;
-  flow?: string;
-  sni?: string;
-  net?: string;
-  type?: string;
-}
+const https_ports = [443, , 2053, 2083, 2087, 2096, 8443];
 
 function changeConfigs(
-  configs: configType[],
+  configs: Record<any, any>[],
   cleanIPs: { ip: string; time: number }[],
   count: number,
-  alpns: string[]
+  alpns: string[],
+  useragents: string[]
 ) {
   if (alpns.length == 0) {
     alpns.push("");
   }
 
+  if (useragents.length == 0) {
+    useragents.push("");
+  }
+
+  var max = 10 * count
+
   let newConfigs: string = "";
-  while (count > 0) {
-    let currentConfig: configType =
-      configs[Math.floor(Math.random() * configs.length)];
-    let protocol_type: string = currentConfig.protocol;
-    if (
-      https_ports.includes(parseInt(currentConfig.port)) &&
-      currentConfig.tls &&
-      currentConfig.tls == "tls" &&
-      (currentConfig.host || currentConfig.sni)
-    ) {
+  while (count > 0 && max > 0) {
+    let currentConfig: Record<any, any> = {...configs[Math.floor(Math.random() * configs.length)]};
+    let protocol_type: string = currentConfig.protocol.toLowerCase();
+    delete currentConfig.protocol;
+
+    if ( https_ports.includes(parseInt(currentConfig.port)) && (currentConfig.host || currentConfig.sni)) {
       let host = currentConfig.host || currentConfig.sni;
-      console.log(host);
       if (
         protocol_type == "vmess" &&
         (currentConfig.net == "ws" || currentConfig.net == "grpc")
       ) {
         try {
-          var conf: configType = { ...currentConfig };
-          conf.aid = 0;
+          let conf: Record<any, any> = { ...currentConfig };
           conf.host = host;
           conf.sni = host;
           conf.tls = "tls";
@@ -77,68 +44,64 @@ function changeConfigs(
             "-" +
             conf.fp +
             (conf.alpn != "" ? "-" + conf.alpn : "");
-          console.log(conf);
           const confStr: string = "vmess://" + btoa(JSON.stringify(conf));
           newConfigs = newConfigs + confStr + "\n";
           count--;
         } catch (ee) {
           console.log("Error Changing VMESS configs");
         }
-      } else if (protocol_type == "vless" || protocol_type == "trojan") {
+      } else if ((protocol_type == "vless" || protocol_type == "trojan") && (currentConfig.type == "ws" || currentConfig.type == "grpc")) {
         try {
-          var conf = { ...currentConfig };
+          let conf: Record<any, any> = { ...currentConfig };
 
-          conf.address =
-            cleanIPs[Math.floor(Math.random() * cleanIPs.length)].ip;
-          var qs: configType = { port: conf.port, protocol: protocol_type };
+          let port = conf.port
+          delete conf.port
+          delete conf.address
 
-          qs.sni = host;
-          qs.host = host;
-          qs.security = "tls";
-          qs.tls = "tls";
-          qs.fp = useragents[Math.floor(Math.random() * useragents.length)];
-          qs.alpn = alpns[Math.floor(Math.random() * alpns.length)];
-          qs.flow = conf.flow ? conf.flow : "";
-          qs.path = conf.path;
-          qs.type = conf.type;
+          conf.sni = host;
+          conf.host = host;
+          conf.tls = "tls";
+          conf.fp = useragents[Math.floor(Math.random() * useragents.length)];
+          conf.alpn = alpns[Math.floor(Math.random() * alpns.length)];
 
-          conf.name =
+          const confStr: string =
+            protocol_type +
+            "://" +
+            (conf.uuid || conf.password) +
+            "@" +
+            cleanIPs[Math.floor(Math.random() * cleanIPs.length)].ip +
+            ":" +
+            port +
+            "?" +
+            serializeQuery(conf) +
+            "#" +
             "Nalbekink" +
             "-" +
             protocol_type +
             "-" +
-            qs.fp +
-            (qs.alpn != "" ? "-" + qs.alpn : "");
-
-          const confStr: string =
-            conf.protocol +
-            "://" +
-            (conf.uuid || conf.password) +
-            "@" +
-            conf.address +
-            ":" +
-            conf.port +
-            "?" +
-            serializeQuery(qs) +
-            "#" +
-            conf.name;
+            conf.fp + (conf.alpn != "" ? "-" + conf.alpn : "");
 
           newConfigs = newConfigs + confStr + "\n";
           count--;
         } catch (ee) {
           console.log("Error Changing VLESS/Trojan configs");
         }
+      } else {
+        console.log('Config Settings Invalid for Changing...')
+        console.log(currentConfig)
+        max--;
       }
     } else {
-      continue;
+      console.log('Config is either not on https ports or its type is not ws/grpc')
+      console.log(currentConfig)
+      max--;
     }
   }
 
-  console.log(newConfigs);
   return newConfigs;
 }
 
-function serializeQuery(obj: configType | any) {
+function serializeQuery(obj: Record<any, any> | any) {
   var str = [];
   for (var p in obj)
     if (obj.hasOwnProperty(p)) {
