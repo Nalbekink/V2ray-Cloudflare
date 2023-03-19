@@ -126,7 +126,7 @@ function serializeQuery(obj: Record<any, any> | any) {
 
 function softmin(values: number[]): number[] {
   const min = Math.max(...values);
-  const softmaxed = values.map((v) => Math.exp(v - min));
+  const softmaxed = values.map((v) => Math.exp(min - v));
   const sum = softmaxed.reduce((acc, cur) => acc + cur, 0);
   return softmaxed.map((v) => v / sum);
 }
