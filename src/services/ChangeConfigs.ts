@@ -15,15 +15,23 @@ function changeConfigs(
     useragents.push("");
   }
 
-  var max = 10 * count
+  var max = 10 * count;
+
+  const weights: number[] = softmin(cleanIPs.map((a) => a.time / 500));
+  const ips: string[] = cleanIPs.map((a) => a.ip);
 
   let newConfigs: string = "";
   while (count > 0 && max > 0) {
-    let currentConfig: Record<any, any> = {...configs[Math.floor(Math.random() * configs.length)]};
+    let currentConfig: Record<any, any> = {
+      ...configs[Math.floor(Math.random() * configs.length)],
+    };
     let protocol_type: string = currentConfig.protocol.toLowerCase();
     delete currentConfig.protocol;
 
-    if ( https_ports.includes(parseInt(currentConfig.port)) && (currentConfig.host || currentConfig.sni)) {
+    if (
+      https_ports.includes(parseInt(currentConfig.port)) &&
+      (currentConfig.host || currentConfig.sni)
+    ) {
       let host = currentConfig.host || currentConfig.sni;
       if (
         protocol_type == "vmess" &&
@@ -34,7 +42,7 @@ function changeConfigs(
           conf.host = host;
           conf.sni = host;
           conf.tls = "tls";
-          conf.add = cleanIPs[Math.floor(Math.random() * cleanIPs.length)].ip;
+          conf.add = sampleFromDistribution(ips, weights);
           conf.fp = useragents[Math.floor(Math.random() * useragents.length)];
           conf.alpn = alpns[Math.floor(Math.random() * alpns.length)];
           conf.ps =
@@ -50,13 +58,16 @@ function changeConfigs(
         } catch (ee) {
           console.log("Error Changing VMESS configs");
         }
-      } else if ((protocol_type == "vless" || protocol_type == "trojan") && (currentConfig.type == "ws" || currentConfig.type == "grpc")) {
+      } else if (
+        (protocol_type == "vless" || protocol_type == "trojan") &&
+        (currentConfig.type == "ws" || currentConfig.type == "grpc")
+      ) {
         try {
           let conf: Record<any, any> = { ...currentConfig };
 
-          let port = conf.port
-          delete conf.port
-          delete conf.address
+          let port = conf.port;
+          delete conf.port;
+          delete conf.address;
 
           conf.sni = host;
           conf.host = host;
@@ -69,7 +80,7 @@ function changeConfigs(
             "://" +
             (conf.uuid || conf.password) +
             "@" +
-            cleanIPs[Math.floor(Math.random() * cleanIPs.length)].ip +
+            sampleFromDistribution(ips, weights) +
             ":" +
             port +
             "?" +
@@ -79,7 +90,8 @@ function changeConfigs(
             "-" +
             protocol_type +
             "-" +
-            conf.fp + (conf.alpn != "" ? "-" + conf.alpn : "");
+            conf.fp +
+            (conf.alpn != "" ? "-" + conf.alpn : "");
 
           newConfigs = newConfigs + confStr + "\n";
           count--;
@@ -87,13 +99,15 @@ function changeConfigs(
           console.log("Error Changing VLESS/Trojan configs");
         }
       } else {
-        console.log('Config Settings Invalid for Changing...')
-        console.log(currentConfig)
+        console.log("Config Settings Invalid for Changing...");
+        console.log(currentConfig);
         max--;
       }
     } else {
-      console.log('Config is either not on https ports or its type is not ws/grpc')
-      console.log(currentConfig)
+      console.log(
+        "Config is either not on https ports or its type is not ws/grpc"
+      );
+      console.log(currentConfig);
       max--;
     }
   }
@@ -108,6 +122,30 @@ function serializeQuery(obj: Record<any, any> | any) {
       str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
     }
   return str.join("&");
+}
+
+function softmin(values: number[]): number[] {
+  const min = Math.max(...values);
+  const softmaxed = values.map((v) => Math.exp(v - min));
+  const sum = softmaxed.reduce((acc, cur) => acc + cur, 0);
+  return softmaxed.map((v) => v / sum);
+}
+
+function sampleFromDistribution<T>(list: T[], weights: number[]): T {
+  const sum = weights.reduce((acc, cur) => acc + cur, 0);
+  const probabilities = weights.map((w) => w / sum);
+
+  let cumulativeProbability = 0;
+  const randomValue = Math.random();
+  for (let i = 0; i < probabilities.length; i++) {
+    cumulativeProbability += probabilities[i];
+    if (randomValue <= cumulativeProbability) {
+      return list[i];
+    }
+  }
+
+  // This line should never be reached, but just in case...
+  return list[0];
 }
 
 export default changeConfigs;

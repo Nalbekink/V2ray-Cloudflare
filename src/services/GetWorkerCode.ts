@@ -1,5 +1,10 @@
 function getWorkerCode(cleanIps: { ip: string; time: number }[]): string {
-  const allowedIpsStr: string = cleanIps.map((ip) => `'${ip.ip}'`).join(",");
+  const weights: number[] = softmin(cleanIps.map((a) => a.time / 500));
+  console.log(weights);
+  const ips: string[] = cleanIps.map((a) => a.ip);
+  console.log(ips);
+  const weightedCleanIPs = sampleMultipleFromDistribution(ips, weights, 100);
+  const allowedIpsStr: string = weightedCleanIPs.join(",\n\t\t");
   return `// Version 1.0.3
 
 const maxConfigItems = 500
@@ -241,3 +246,38 @@ return yaml;
 }
 
 export default getWorkerCode;
+
+function softmin(values: number[]): number[] {
+  const min = Math.min(...values);
+  const softmaxed = values.map((v) => Math.exp(min - v));
+  const sum = softmaxed.reduce((acc, cur) => acc + cur, 0);
+  return softmaxed.map((v) => v / sum);
+}
+
+function sampleMultipleFromDistribution<T>(
+  list: T[],
+  weights: number[],
+  n: number
+): T[] {
+  const sum = weights.reduce((acc, cur) => acc + cur, 0);
+  const probabilities = weights.map((w) => w / sum);
+
+  const cumulativeProbabilities = [];
+  let cumulativeProbability = 0;
+  for (let i = 0; i < probabilities.length; i++) {
+    cumulativeProbability += probabilities[i];
+    cumulativeProbabilities.push(cumulativeProbability);
+  }
+
+  const samples = [];
+  for (let i = 0; i < n; i++) {
+    const randomValue = Math.random();
+    let j = 0;
+    while (randomValue > cumulativeProbabilities[j]) {
+      j++;
+    }
+    samples.push(list[j]);
+  }
+
+  return samples;
+}
