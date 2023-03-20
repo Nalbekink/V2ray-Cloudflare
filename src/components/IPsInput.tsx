@@ -28,7 +28,7 @@ import {
 import extractIPs from "../services/ExtractIPs";
 import testIp from "../services/TestIp";
 import getCloudflareIPs from "../services/GetCloudflareIPs";
-
+import { Grid, GridItem } from "@chakra-ui/react";
 import IpItem from "./IpItem.jsx";
 import {
   Mutex,
@@ -38,6 +38,7 @@ import {
   withTimeout,
 } from "async-mutex";
 import { useState, useEffect } from "react";
+import { Skeleton, SkeletonCircle, SkeletonText } from "@chakra-ui/react";
 
 interface props {
   maxIP: number;
@@ -70,7 +71,8 @@ const IPsInput = ({
 }: props) => {
   const [ipText, setIpText] = useState<string>("");
   const [progress, setProgress] = useState<number>(0);
-  const [useAll, setUseAll] = useState<boolean>(true);
+  const [useAll, setUseAll] = useState<boolean>(false);
+  const [useUK, setUseUK] = useState<boolean>(true);
 
   useEffect(() => {
     const extractedIPs = extractIPs(ipText);
@@ -79,19 +81,25 @@ const IPsInput = ({
 
   useEffect(() => {
     if (useAll) {
-      setIPs(extractIPs(getCloudflareIPs()));
+      setIPs(extractIPs(getCloudflareIPs(true)));
+      setUseUK(false);
+    } else if (useUK) {
+      setIPs(extractIPs(getCloudflareIPs(false)));
     } else {
       setIpText(ipText == "" ? "-" : "");
     }
-  }, [useAll]);
+  }, [useAll, useUK]);
 
   const start = () => {
     const mutex = new Mutex();
     let validIps: { ip: string; time: number }[] = [];
+    const weights: number[] = ips.map((a) => cidrToIpCount(a));
+    const sum = weights.reduce((acc, cur) => acc + cur, 0);
+
     async function testIps() {
-      const shuffled_ips = randomizeElements(ips);
-      for (let i = 0; i < shuffled_ips.length; i++) {
-        const ip = shuffled_ips[i];
+      for (let i = 0; i < sum; i++) {
+        const ip_range = cidrToIpArray(sampleFromDistribution(ips, weights));
+        const ip = ip_range[Math.floor(Math.random() * ip_range.length)];
         const result = await testIp(ip, timeout, pingCount);
         if (result !== null) {
           const release = await mutex.acquire();
@@ -118,25 +126,48 @@ const IPsInput = ({
   return (
     <>
       <Heading p={10}>IP Settings</Heading>
-      <HStack justifyContent="space-between">
-        <Tooltip label="If ON, it will only use the uk datacenter IPs. otherwise you should specify the ips & ip ranges yourself.">
-          <Text as="b" color="gray.600">
-            Use All UK IPs?
-          </Text>
-        </Tooltip>
-        <Switch
-          p={5}
-          isDisabled={isSubmitted}
-          colorScheme="orange"
-          size="lg"
-          value={`${useAll}`}
-          isChecked={useAll}
-          onChange={(e) => setUseAll(e.target.checked)}
-        />
-      </HStack>
+      <Grid
+        templateAreas={{
+          base: `"all" "uk"`,
+          lg: `"all uk"`,
+        }}
+      >
+        <GridItem area={"all"} alignItems="center" justifyContent="center">
+          <Tooltip label="If ON, it will use all the cloudflare IPs. otherwise you should specify the ips & ip ranges yourself.">
+            <Text as="b" color="gray.600">
+              Use All IPs?
+            </Text>
+          </Tooltip>
+          <Switch
+            p={5}
+            isDisabled={isSubmitted}
+            colorScheme="orange"
+            size="lg"
+            value={`${useAll}`}
+            isChecked={useAll}
+            onChange={(e) => setUseAll(e.target.checked)}
+          />
+        </GridItem>
+        <GridItem area={"uk"} alignItems="center" justifyContent="center">
+          <Tooltip label="If ON, it will only use the uk datacenter IPs. otherwise you should specify the ips & ip ranges yourself.">
+            <Text as="b" color="gray.600">
+              Use All UK IPs?
+            </Text>
+          </Tooltip>
+          <Switch
+            p={5}
+            isDisabled={isSubmitted}
+            colorScheme="orange"
+            size="lg"
+            value={`${useUK}`}
+            isChecked={useUK}
+            onChange={(e) => setUseUK(e.target.checked)}
+          />
+        </GridItem>
+      </Grid>
       <Tooltip label="here you can enter your desired IPs and IP ranges with any format you like.">
         <Input
-          isDisabled={useAll || isSubmitted}
+          isDisabled={useAll || useUK || isSubmitted}
           borderRadius={20}
           placeholder="Enter All Your IPs & IP Ranges..."
           value={ipText == "" || ipText == "-" ? undefined : ipText}
@@ -146,13 +177,18 @@ const IPsInput = ({
         />
       </Tooltip>
       <HStack width="100%" justifyContent="center">
-        <Badge colorScheme="orange">IP Count: {ips.length}</Badge>
+        <Badge colorScheme="orange">
+          IP Count:{" "}
+          {ips.map((a) => cidrToIpCount(a)).reduce((acc, cur) => acc + cur, 0)}
+        </Badge>
       </HStack>
       <Tooltip label="here you can specify how many clean ips you need.">
         <NumberInput
           width="100%"
           colorScheme="orange"
-          max={ips.length}
+          max={ips
+            .map((a) => cidrToIpCount(a))
+            .reduce((acc, cur) => acc + cur, 0)}
           value={maxIP ? maxIP : undefined}
           isDisabled={isSubmitted}
         >
@@ -251,20 +287,30 @@ const IPsInput = ({
                 </Tr>
               </Thead>
               <Tbody>
-                {validIPs
-                  .sort(
-                    (
-                      a1: { ip: string; time: number },
-                      a2: { ip: string; time: number }
-                    ) => a1.time - a2.time
-                  )
-                  .map((ipObj: { ip: string; time: number }) => (
+                <>
+                  {validIPs
+                    .sort(
+                      (
+                        a1: { ip: string; time: number },
+                        a2: { ip: string; time: number }
+                      ) => a1.time - a2.time
+                    )
+                    .map((ipObj: { ip: string; time: number }) => (
+                      <IpItem
+                        key={ipObj.ip}
+                        ip={ipObj.ip}
+                        time={ipObj.time}
+                        isLoaded={true}
+                      ></IpItem>
+                    ))}
+                  {isSubmitted && (
                     <IpItem
-                      key={ipObj.ip}
-                      ip={ipObj.ip}
-                      time={ipObj.time}
+                      isLoaded={false}
+                      ip={"192.168.0.1"}
+                      time={10000}
                     ></IpItem>
-                  ))}
+                  )}
+                </>
               </Tbody>
             </Table>
           </TableContainer>
@@ -285,4 +331,59 @@ function randomizeElements(arr: string[]) {
   }
 
   return shuffledList;
+}
+
+function cidrToIpArray(cidr: string): string[] {
+  const parts = cidr.split("/");
+  const ip = parts[0];
+  const mask = parseInt(parts[1], 10);
+  if (isNaN(mask)) {
+    return [ip];
+  }
+  const ipParts = ip.split(".");
+  const start =
+    ((parseInt(ipParts[0], 10) << 24) |
+      (parseInt(ipParts[1], 10) << 16) |
+      (parseInt(ipParts[2], 10) << 8) |
+      parseInt(ipParts[3], 10)) >>>
+    0; // convert to unsigned int
+  const end = (start | (0xffffffff >>> mask)) >>> 0; // convert to unsigned int
+
+  const ips: string[] = [];
+  for (let i = start; i <= end; i++) {
+    const a = (i >> 24) & 0xff;
+    const b = (i >> 16) & 0xff;
+    const c = (i >> 8) & 0xff;
+    const d = i & 0xff;
+    ips.push(`${a}.${b}.${c}.${d}`);
+  }
+  return ips;
+}
+
+function cidrToIpCount(cidr: string): number {
+  const parts = cidr.split("/");
+  const mask = parseInt(parts[1], 10);
+  if (isNaN(mask)) {
+    // If subnet mask is missing or cannot be parsed, assume /32 CIDR range with 1 IP address
+    return 1;
+  }
+  const ipCount = Math.pow(2, 32 - mask);
+  return ipCount;
+}
+
+function sampleFromDistribution<T>(list: T[], weights: number[]): T {
+  const sum = weights.reduce((acc, cur) => acc + cur, 0);
+  const probabilities = weights.map((w) => w / sum);
+
+  let cumulativeProbability = 0;
+  const randomValue = Math.random();
+  for (let i = 0; i < probabilities.length; i++) {
+    cumulativeProbability += probabilities[i];
+    if (randomValue <= cumulativeProbability) {
+      return list[i];
+    }
+  }
+
+  // This line should never be reached, but just in case...
+  return list[0];
 }
