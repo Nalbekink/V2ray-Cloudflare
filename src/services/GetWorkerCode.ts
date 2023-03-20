@@ -4,7 +4,11 @@ function getWorkerCode(cleanIps: { ip: string; time: number }[]): string {
   }
   const weights: number[] = softmin(cleanIps.map((a) => a.time / 500));
   const ips: string[] = cleanIps.map((a) => a.ip);
-  const weightedCleanIPs = sampleMultipleFromDistribution(ips, weights, 100);
+  const weightedCleanIPs = sampleMultipleFromDistribution(
+    ips,
+    weights,
+    100
+  ).map((a) => `'${a}'`);
   const allowedIpsStr: string = weightedCleanIPs.join(",\n\t\t");
   return `// Version 1.0.3
 
