@@ -9,18 +9,18 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       generateSW: "autoUpdate",
-      injectRegister: "auto",
+
       devOptions: {
         enabled: true,
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg}"],
       },
 
       manifest: {
-        name: "V2Ray",
-        short_name: "V2Cloud",
-        description: "cloudflare ip scanner",
+        name: "V2Ray+Cloudflare",
+        short_name: "V2Ray+Cloudflare",
+        description: "Cloudflare IP Scanner",
         theme_color: "#ffffff",
         icons: [
           {
@@ -32,6 +32,12 @@ export default defineConfig({
             src: "android-chrome-512x512.png",
             sizes: "512x512",
             type: "image/png",
+          },
+          {
+            src: "android-chrome-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
           },
         ],
       },

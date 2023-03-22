@@ -5,6 +5,11 @@ import App from "./App";
 import theme from "./theme";
 import "./index.css";
 import { Analytics } from "@vercel/analytics/react";
+import { registerSW } from "virtual:pwa-register";
+
+const updateSW = registerSW({
+  onOfflineReady() {},
+});
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
