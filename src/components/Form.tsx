@@ -25,7 +25,9 @@ import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import getWorkerCode from "../services/GetWorkerCode.js";
 import changeConfigs from "../services/ChangeConfigs.js";
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import { SiBitcoin, SiEthereum } from "react-icons/si";
+import { SiBitcoin, SiEthereum, SiDogecoin } from "react-icons/si";
+import { TbSquareLetterT } from "react-icons/tb";
+
 import { MdEmail } from "react-icons/md";
 import vahid from "../assets/vahid.jpg";
 import segaro from "../assets/segaro.jpg";
@@ -127,8 +129,8 @@ const Form = () => {
           <ConfigsInput
             alpns={alpns}
             onAlpnsChange={setAlpns}
-            useragents = {useragents}
-            setUseragents = {setUseragents}
+            useragents={useragents}
+            setUseragents={setUseragents}
             configs={configs}
             setConfigs={setConfigs}
             configCount={configCount}
@@ -184,7 +186,10 @@ const Form = () => {
           <>
             <Heading p={10}>Configs</Heading>
             {changedConfigs.map((config) => (
-              <CopyToClipboard key={`${config}-${Math.random()}-${Math.random()}`} text={config}>
+              <CopyToClipboard
+                key={`${config}-${Math.random()}-${Math.random()}`}
+                text={config}
+              >
                 <Text
                   as="kbd"
                   width="100%"
@@ -294,7 +299,11 @@ const Form = () => {
           </Text>
           <HStack>
             <>
-              <SiBitcoin color="#F6AD55" />
+              <Tooltip label="Bitcoin" bg="orange.500">
+                <span>
+                  <SiBitcoin color="#F6AD55" />
+                </span>
+              </Tooltip>
               <CopyToClipboard text={"1873hb4kL9Dyc1aEL2jTG9Lx2DKbnfvUow"}>
                 <Text as="kbd" cursor={"cell"}>
                   1873hb4kL9Dyc1aEL2jTG9Lx2DKbnfvUow
@@ -304,12 +313,44 @@ const Form = () => {
           </HStack>
           <HStack>
             <>
-              <SiEthereum color="#F6AD55" />
+              <Tooltip label="Ethereum" bg="orange.500">
+                <span>
+                  <SiEthereum color="#F6AD55" />
+                </span>
+              </Tooltip>
               <CopyToClipboard
                 text={"0xb84efe1385314f332EcA317637a92EcC3Bc40f9a"}
               >
                 <Text as="kbd" cursor={"cell"}>
                   0xb84efe1385314f332EcA317637a92EcC3Bc40f9a
+                </Text>
+              </CopyToClipboard>
+            </>
+          </HStack>
+          <HStack>
+            <>
+              <Tooltip label="Tron (TRX)" bg="orange.500">
+                <span>
+                  <TbSquareLetterT color="#F6AD55" />
+                </span>
+              </Tooltip>
+              <CopyToClipboard text={"TN2oprQkWpEVZdJ4FCes3Ju2ZhLLMHeH2C"}>
+                <Text as="kbd" cursor={"cell"}>
+                  TN2oprQkWpEVZdJ4FCes3Ju2ZhLLMHeH2C
+                </Text>
+              </CopyToClipboard>
+            </>
+          </HStack>
+          <HStack>
+            <>
+              <Tooltip label="Dogecoin" bg="orange.500">
+                <span>
+                  <SiDogecoin color="#F6AD55" />
+                </span>
+              </Tooltip>
+              <CopyToClipboard text={"DU8KaA7uehjyRBBTigtsWNGLH9H5uR25PK"}>
+                <Text as="kbd" cursor={"cell"}>
+                  DU8KaA7uehjyRBBTigtsWNGLH9H5uR25PK
                 </Text>
               </CopyToClipboard>
             </>
