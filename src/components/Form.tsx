@@ -25,7 +25,7 @@ import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import getWorkerCode from "../services/GetWorkerCode.js";
 import changeConfigs from "../services/ChangeConfigs.js";
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import { SiBitcoin, SiEthereum, SiDogecoin } from "react-icons/si";
+import { SiBitcoin, SiEthereum, SiDogecoin, SiTwitter } from "react-icons/si";
 import { TbSquareLetterT } from "react-icons/tb";
 
 import { MdEmail } from "react-icons/md";
@@ -362,6 +362,14 @@ const Form = () => {
             <MdEmail color="#F6AD55" />
             <Text as="a" cursor={"cell"} href="mailto:nalbekink@gmail.com">
               nalbekink@gmail.com
+            </Text>
+          </>
+        </HStack>
+        <HStack>
+          <>
+            <SiTwitter color="#F6AD55" />
+            <Text as="a" cursor={"cell"} href="https://twitter.com/Nalbekink">
+              Nalbekink
             </Text>
           </>
         </HStack>
