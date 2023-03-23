@@ -102,7 +102,9 @@ const IPsInput = ({
     const allMutex = new Mutex();
     let validIps: { ip: string; time: number }[] = [];
     const weights: number[] = ips.map((a) => Math.sqrt(cidrToIpCount(a)));
-    const sum = weights.reduce((acc, cur) => acc + cur, 0);
+    const sum = ips
+      .map((a) => cidrToIpCount(a))
+      .reduce((acc, cur) => acc + cur, 0);
     setTestedIPCount(0);
     setValidIPs([]);
 
