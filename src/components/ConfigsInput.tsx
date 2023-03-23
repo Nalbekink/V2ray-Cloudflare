@@ -86,8 +86,14 @@ const ConfigsInput = ({
           />
         </NumberInput>
       </Tooltip>
-      <AlpnCheckbox onChange={(e: string[]) => onAlpnsChange(e)} />
-      <UserAgentsCheckbox onChange={(e: string[]) => setUseragents(e)} />
+      <AlpnCheckbox
+        onChange={(e: string[]) => onAlpnsChange(e)}
+        alpns={alpns}
+      />
+      <UserAgentsCheckbox
+        onChange={(e: string[]) => setUseragents(e)}
+        useragents={useragents}
+      />
     </>
   );
 };

@@ -14,9 +14,10 @@ import {
 import React from "react";
 
 interface props {
+  alpns: string[];
   onChange: any;
 }
-const AlpnCheckbox = ({ onChange }: props) => {
+const AlpnCheckbox = ({ alpns, onChange }: props) => {
   return (
     <VStack
       width="100%"
@@ -33,7 +34,7 @@ const AlpnCheckbox = ({ onChange }: props) => {
       </Tooltip>
       <CheckboxGroup
         colorScheme="orange"
-        defaultValue={["h2", "http/1.1", "h2,http/1.1"]}
+        defaultValue={alpns}
         onChange={(value) => onChange(value)}
       >
         <Stack spacing={[1, 5]} direction={["column", "row"]}>

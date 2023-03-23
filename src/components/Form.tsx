@@ -33,8 +33,14 @@ import vahid from "../assets/vahid.jpg";
 import segaro from "../assets/segaro.jpg";
 import teegra from "../assets/teegra.jpg";
 import { Grid, GridItem } from "@chakra-ui/react";
+import Dexie from "dexie";
 
 SyntaxHighlighter.registerLanguage("javascript", js);
+
+const db: Record<string, any> = new Dexie("v2ray+cloudflare");
+db.version(1).stores({
+  history: "++id,maxIP,pingCount,timeout,alpns,useragents",
+});
 
 const Form = () => {
   const [ips, setIPs] = useState<string[]>([]);
@@ -68,6 +74,40 @@ const Form = () => {
   const [isSubmitted, setSubmitted] = useState<boolean>(false);
 
   const toast = useToast();
+  useEffect(() => {
+    db.history
+      .get(1)
+      .then((lastRecord: any) => {
+        if (lastRecord) {
+          setMaxIP(lastRecord.maxIP);
+          setPingCount(lastRecord.pingCount);
+          setTimeout(lastRecord.timeout);
+          setAlpns(lastRecord.alpns);
+          setUseragents(lastRecord.useragents);
+        } else {
+          const defaultValues = {
+            maxIP: 30,
+            pingCount: 5,
+            timeout: 1500,
+            alpns: ["h2", "http/1.1", "h2,http/1.1"],
+            useragents: [
+              "chrome",
+              "firefox",
+              "safari",
+              "random",
+              "randomized",
+              "ios",
+              "android",
+              "edge",
+            ],
+          };
+          db.history.add(defaultValues);
+        }
+      })
+      .catch((error: any) => {
+        console.error("Error retrieving history from database: ", error);
+      });
+  }, []);
 
   useEffect(() => {
     if (isSubmitted) {
@@ -128,9 +168,15 @@ const Form = () => {
         {configVisible && (
           <ConfigsInput
             alpns={alpns}
-            onAlpnsChange={setAlpns}
+            onAlpnsChange={(newAlpns: string[]) => {
+              db.history.update(1, { alpns: newAlpns });
+              setAlpns(newAlpns);
+            }}
             useragents={useragents}
-            setUseragents={setUseragents}
+            setUseragents={(newUseragents: string[]) => {
+              db.history.update(1, { useragents: newUseragents });
+              setUseragents(newUseragents);
+            }}
             configs={configs}
             setConfigs={setConfigs}
             configCount={configCount}
@@ -144,11 +190,20 @@ const Form = () => {
           validIPs={validIPs}
           setValidIPs={setValidIPs}
           maxIP={maxIP}
-          setMaxIP={setMaxIP}
+          setMaxIP={(newMaxIP) => {
+            db.history.update(1, { maxIP: newMaxIP });
+            setMaxIP(newMaxIP);
+          }}
           pingCount={pingCount}
-          setPingCount={setPingCount}
+          setPingCount={(newPingCount) => {
+            db.history.update(1, { pingCount: newPingCount });
+            setPingCount(newPingCount);
+          }}
           timeout={timeout}
-          setTimeout={setTimeout}
+          setTimeout={(newTimeout) => {
+            db.history.update(1, { timeout: newTimeout });
+            setTimeout(newTimeout);
+          }}
           isSubmitted={isSubmitted}
           setSubmitted={setSubmitted}
         />

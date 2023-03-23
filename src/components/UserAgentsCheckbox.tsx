@@ -15,10 +15,11 @@ import React from "react";
 import { Grid, GridItem } from "@chakra-ui/react";
 
 interface props {
+  useragents: string[];
   onChange: any;
 }
-const UserAgentsCheckbox = ({ onChange }: props) => {
-  var useragents = [
+const UserAgentsCheckbox = ({ useragents, onChange }: props) => {
+  const all_useragents = [
     "chrome",
     "firefox",
     "safari",
@@ -28,18 +29,17 @@ const UserAgentsCheckbox = ({ onChange }: props) => {
     "android",
     "edge",
   ];
-
   const getGrid = (max: number) => {
-    let columns = Math.ceil(useragents.length / max);
+    let columns = Math.ceil(all_useragents.length / max);
     let grid = ``;
     for (let i = 0; i < columns; i++) {
       let row = `"`;
       for (let j = 0; j < max; j++) {
-        if (i * max + j >= useragents.length) {
+        if (i * max + j >= all_useragents.length) {
           row += "empty" + " ";
           continue;
         }
-        row += useragents[i * max + j] + " ";
+        row += all_useragents[i * max + j] + " ";
       }
       row += `"`;
       grid += row + " ";
@@ -74,7 +74,7 @@ const UserAgentsCheckbox = ({ onChange }: props) => {
           p={5}
           width="90%"
         >
-          {useragents.map((ua) => (
+          {all_useragents.map((ua) => (
             <GridItem
               area={ua}
               alignItems="center"

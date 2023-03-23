@@ -1,32 +1,29 @@
+import axios, { CancelToken, AxiosError } from "axios";
+
 async function testIp(ip: string, timeout: number = 2500, count: number = 5) {
-  var testResult: number = 0;
-  const url: string = `https://${ip}/__down`;
+  const url: string = `https://${ip}/`;
   const startTime = performance.now();
-  const controller = new AbortController();
+  let successfulRequests: number = 0;
 
   for (let i = 0; i < count; i++) {
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, timeout);
-
     try {
-      const response = await fetch(url, {
-        signal: controller.signal,
+      const source = axios.CancelToken.source();
+      const response = await axios.get(url, {
+        cancelToken: source.token,
+        timeout: timeout,
       });
-
-      testResult++;
     } catch (error: any) {
-      if (error.name === "AbortError") {
-        //
+      if (error instanceof AxiosError && error.message.includes("Network")) {
+        successfulRequests++;
       } else {
-        testResult++;
+        return null;
       }
     }
-    clearTimeout(timeoutId);
   }
 
   const duration = performance.now() - startTime;
-  if (testResult === count) {
+
+  if (successfulRequests === count) {
     return { ip: ip, time: Math.floor(duration / count) };
   } else {
     return null;

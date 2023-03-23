@@ -39,6 +39,7 @@ import {
 } from "async-mutex";
 import { useState, useEffect } from "react";
 import { Skeleton, SkeletonCircle, SkeletonText } from "@chakra-ui/react";
+import { Fade, ScaleFade, Slide, SlideFade } from "@chakra-ui/react";
 
 interface props {
   maxIP: number;
@@ -74,10 +75,16 @@ const IPsInput = ({
   const [useAll, setUseAll] = useState<boolean>(false);
   const [useUK, setUseUK] = useState<boolean>(true);
 
+  const [testedIPCount, setTestedIPCount] = useState<number>(0);
+
   useEffect(() => {
     const extractedIPs = extractIPs(ipText);
     setIPs(extractedIPs);
   }, [ipText]);
+
+  useEffect(() => {
+    console.log(testedIPCount);
+  }, [testedIPCount]);
 
   useEffect(() => {
     if (useAll) {
@@ -91,24 +98,29 @@ const IPsInput = ({
   }, [useAll, useUK]);
 
   const start = () => {
-    const mutex = new Mutex();
+    const validMutex = new Mutex();
+    const allMutex = new Mutex();
     let validIps: { ip: string; time: number }[] = [];
-    const weights: number[] = ips.map((a) => cidrToIpCount(a));
+    const weights: number[] = ips.map((a) => Math.sqrt(cidrToIpCount(a)));
     const sum = weights.reduce((acc, cur) => acc + cur, 0);
+    setTestedIPCount(0);
+    setValidIPs([]);
 
     async function testIps() {
       for (let i = 0; i < sum; i++) {
         const ip_range = cidrToIpArray(sampleFromDistribution(ips, weights));
         const ip = ip_range[Math.floor(Math.random() * ip_range.length)];
         const result = await testIp(ip, timeout, pingCount);
+
+        await allMutex.runExclusive(async () => {
+          setTestedIPCount((prevCount) => Math.max(prevCount + 1, i + 1));
+        });
+
         if (result !== null) {
-          const release = await mutex.acquire();
-          try {
+          await validMutex.runExclusive(async () => {
             validIps.push(result);
             setValidIPs(validIps);
-          } finally {
-            release();
-          }
+          });
         }
         const currentProgress = ((validIps.length + 1) / maxIP) * 100;
 
@@ -267,6 +279,20 @@ const IPsInput = ({
           Start
         </Button>
       </Tooltip>
+      {testedIPCount > 0 && (
+        <HStack>
+          <br />
+          <Badge variant="subtle" colorScheme="orange">
+            Tested: {testedIPCount}
+          </Badge>
+          <Badge variant="subtle" colorScheme="red">
+            Failed: {testedIPCount - validIPs.length}
+          </Badge>
+          <Badge variant="subtle" colorScheme="green">
+            Succeeded: {validIPs.length}
+          </Badge>
+        </HStack>
+      )}
       <br />
       {validIPs.length > 0 && (
         <>
@@ -274,8 +300,10 @@ const IPsInput = ({
             colorScheme="orange"
             height="16px"
             width="100%"
+            hasStripe
             value={progress}
             borderRadius={20}
+            isAnimated={true}
           />
           <TableContainer width="100%">
             <Table size="sm" variant="striped" colorScheme="orange">
