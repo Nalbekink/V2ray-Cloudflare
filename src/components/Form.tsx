@@ -44,7 +44,9 @@ db.version(1).stores({
 
 const Form = () => {
   const [ips, setIPs] = useState<string[]>([]);
-  const [validIPs, setValidIPs] = useState<{ ip: string; time: number }[]>([]);
+  const [validIPs, setValidIPs] = useState<
+    { ip: string; time: number; region: Record<string, string> }[]
+  >([]);
   const [maxIP, setMaxIP] = useState<number>(30);
   const [pingCount, setPingCount] = useState<number>(5);
   const [timeout, setTimeout] = useState<number>(1500);

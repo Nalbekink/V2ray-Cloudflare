@@ -1,9 +1,11 @@
 import axios, { CancelToken, AxiosError } from "axios";
+import getCountryInfo from "./GetCountry";
 
 async function testIp(ip: string, timeout: number = 2500, count: number = 5) {
-  const url: string = `https://${ip}/`;
+  const url: string = `http://${ip}/cdn-cgi/trace/`;
   const startTime = performance.now();
   let successfulRequests: number = 0;
+  let countryInfo: Record<string, string> = {};
 
   for (let i = 0; i < count; i++) {
     try {
@@ -12,19 +14,21 @@ async function testIp(ip: string, timeout: number = 2500, count: number = 5) {
         cancelToken: source.token,
         timeout: timeout,
       });
-    } catch (error: any) {
-      if (error instanceof AxiosError && error.message.includes("Network")) {
-        successfulRequests++;
-      } else {
-        return null;
+      successfulRequests += 1;
+      if (successfulRequests == 1) {
+        countryInfo = getCountryInfo(
+          response.data.split("\n")[6].split("=")[1]
+        );
       }
+    } catch (error: any) {
+      return null;
     }
   }
 
   const duration = performance.now() - startTime;
 
   if (successfulRequests === count) {
-    return { ip: ip, time: Math.floor(duration / count) };
+    return { ip: ip, time: Math.floor(duration / count), region: countryInfo };
   } else {
     return null;
   }

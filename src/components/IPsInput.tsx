@@ -44,8 +44,10 @@ import { Fade, ScaleFade, Slide, SlideFade } from "@chakra-ui/react";
 interface props {
   maxIP: number;
   setMaxIP: (value: number) => void;
-  validIPs: { ip: string; time: number }[];
-  setValidIPs: (value: { ip: string; time: number }[]) => void;
+  validIPs: { ip: string; time: number; region: Record<string, string> }[];
+  setValidIPs: (
+    value: { ip: string; time: number; region: Record<string, string> }[]
+  ) => void;
   ips: string[];
   setIPs: (value: string[]) => void;
   pingCount: number;
@@ -83,10 +85,6 @@ const IPsInput = ({
   }, [ipText]);
 
   useEffect(() => {
-    console.log(testedIPCount);
-  }, [testedIPCount]);
-
-  useEffect(() => {
     if (useAll) {
       setIPs(extractIPs(getCloudflareIPs(true)));
       setUseUK(false);
@@ -100,7 +98,11 @@ const IPsInput = ({
   const start = () => {
     const validMutex = new Mutex();
     const allMutex = new Mutex();
-    let validIps: { ip: string; time: number }[] = [];
+    let validIps: {
+      ip: string;
+      time: number;
+      region: Record<string, string>;
+    }[] = [];
     const weights: number[] = ips.map((a) => Math.sqrt(cidrToIpCount(a)));
     const sum = ips
       .map((a) => cidrToIpCount(a))
@@ -165,7 +167,7 @@ const IPsInput = ({
         <GridItem area={"uk"} alignItems="center" justifyContent="center">
           <Tooltip label="If ON, it will only use the uk datacenter IPs. otherwise you should specify the ips & ip ranges yourself.">
             <Text as="b" color="gray.600">
-              Use All UK IPs?
+              Use All default IPs?
             </Text>
           </Tooltip>
           <Switch
@@ -312,6 +314,7 @@ const IPsInput = ({
               <TableCaption>Valid IPs</TableCaption>
               <Thead>
                 <Tr>
+                  <Th>Loc</Th>
                   <Th>IP</Th>
                   <Th>Latency</Th>
                 </Tr>
@@ -321,23 +324,44 @@ const IPsInput = ({
                   {validIPs
                     .sort(
                       (
-                        a1: { ip: string; time: number },
-                        a2: { ip: string; time: number }
+                        a1: {
+                          ip: string;
+                          time: number;
+                          region: Record<string, string>;
+                        },
+                        a2: {
+                          ip: string;
+                          time: number;
+                          region: Record<string, string>;
+                        }
                       ) => a1.time - a2.time
                     )
-                    .map((ipObj: { ip: string; time: number }) => (
-                      <IpItem
-                        key={ipObj.ip}
-                        ip={ipObj.ip}
-                        time={ipObj.time}
-                        isLoaded={true}
-                      ></IpItem>
-                    ))}
+                    .map(
+                      (ipObj: {
+                        ip: string;
+                        time: number;
+                        region: Record<string, string>;
+                      }) => (
+                        <IpItem
+                          key={ipObj.ip}
+                          ip={ipObj.ip}
+                          time={ipObj.time}
+                          region={ipObj.region}
+                          isLoaded={true}
+                        ></IpItem>
+                      )
+                    )}
                   {isSubmitted && (
                     <IpItem
                       isLoaded={false}
                       ip={"192.168.0.1"}
                       time={10000}
+                      region={{
+                        city: "?",
+                        country: "?",
+                        alphaCode2: "?",
+                        alphaCode3: "?",
+                      }}
                     ></IpItem>
                   )}
                 </>
