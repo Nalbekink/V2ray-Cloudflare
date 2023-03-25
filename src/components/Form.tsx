@@ -218,7 +218,7 @@ const Form = () => {
             as={"a"}
             isDisabled={validIPs.length < 1}
             colorScheme="orange"
-            width="50%"
+            width="70%"
             borderRadius={20}
             mt={20}
             onClick={() => {
@@ -285,7 +285,7 @@ const Form = () => {
                 isLoading={isSubmitted}
                 isDisabled={!(maxIP && pingCount && timeout)}
                 colorScheme="orange"
-                width="50%"
+                width="70%"
                 borderRadius={20}
                 mt={20}
                 onClick={() => {

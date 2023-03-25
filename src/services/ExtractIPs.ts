@@ -46,7 +46,6 @@ function extractIPs(text: string): string[] {
     ips.push(match[0]);
   }
 
-  console.log(ips);
   return ips;
 }
 

@@ -23,7 +23,9 @@ import {
   NumberInputField,
   NumberInput,
   Heading,
+  FormControl,
   Tooltip,
+  Box,
 } from "@chakra-ui/react";
 import extractIPs from "../services/ExtractIPs";
 import testIp from "../services/TestIp";
@@ -37,6 +39,15 @@ import {
   SemaphoreInterface,
   withTimeout,
 } from "async-mutex";
+import {
+  AsyncCreatableSelect,
+  AsyncSelect,
+  CreatableSelect,
+  Select,
+  useChakraSelectProps,
+} from "chakra-react-select";
+import { GroupBase, OptionBase } from "chakra-react-select";
+
 import { useState, useEffect } from "react";
 import { Skeleton, SkeletonCircle, SkeletonText } from "@chakra-ui/react";
 import { Fade, ScaleFade, Slide, SlideFade } from "@chakra-ui/react";
@@ -54,6 +65,11 @@ interface props {
   setTimeout: (value: number) => void;
   isSubmitted: boolean;
   setSubmitted: (value: boolean) => void;
+}
+
+interface CidrOption extends OptionBase {
+  label: any;
+  value: string;
 }
 
 const IPsInput = ({
@@ -77,23 +93,55 @@ const IPsInput = ({
 
   const [testedIPCount, setTestedIPCount] = useState<number>(0);
 
-  useEffect(() => {
-    const extractedIPs = extractIPs(ipText);
-    setIPs(extractedIPs);
-  }, [ipText]);
+  const [selectedOptions, setSelectedOptions] = useState<CidrOption[]>([]);
+  const [allOptions, setAllOptions] = useState<string[]>(
+    extractIPs(getCloudflareIPs(true))
+  );
+
+  const selectProps = useChakraSelectProps({
+    isMulti: true,
+    value: selectedOptions,
+    onChange: (value: any) => {
+      let joined_values = value.map((a: CidrOption) => a.value).join(" ");
+
+      let values = extractIPs(joined_values);
+      setSelectedOptions(
+        values.map((ip) => {
+          let count = cidrToIpCount(ip);
+          return {
+            value: ip,
+            label: (
+              <Box>
+                <Text fontSize="xs" as="kbd" color="gray.500">
+                  {ip}
+                </Text>
+                <Text fontSize="xs" as="b" color="gray.700" m={2}>
+                  -
+                </Text>
+                <Badge as="kbd" colorScheme="orange">
+                  {count}
+                </Badge>
+              </Box>
+            ),
+          };
+        })
+      );
+    },
+  });
 
   useEffect(() => {
-    console.log(testedIPCount);
-  }, [testedIPCount]);
+    if (!(useAll || useUK)) setIPs(selectedOptions.map((cidr) => cidr.value));
+  }, [selectedOptions]);
 
   useEffect(() => {
+    setSelectedOptions([]);
     if (useAll) {
       setIPs(extractIPs(getCloudflareIPs(true)));
       setUseUK(false);
     } else if (useUK) {
       setIPs(extractIPs(getCloudflareIPs(false)));
     } else {
-      setIpText(ipText == "" ? "-" : "");
+      setIPs([]);
     }
   }, [useAll, useUK]);
 
@@ -179,7 +227,7 @@ const IPsInput = ({
           />
         </GridItem>
       </Grid>
-      <Tooltip label="here you can enter your desired IPs and IP ranges with any format you like.">
+      {/* <Tooltip label="here you can enter your desired IPs and IP ranges with any format you like.">
         <Input
           isDisabled={useAll || useUK || isSubmitted}
           borderRadius={20}
@@ -189,7 +237,38 @@ const IPsInput = ({
           onChange={(event) => setIpText(event.target.value)}
           size="md"
         />
-      </Tooltip>
+      </Tooltip> */}
+      <FormControl isDisabled={useAll || useUK || isSubmitted}>
+        <CreatableSelect<CidrOption, true, GroupBase<CidrOption>>
+          {...selectProps}
+          isMulti
+          name="IP Ranges"
+          colorScheme="orange"
+          errorBorderColor="orange.200"
+          options={allOptions.map((ip) => {
+            let count = cidrToIpCount(ip);
+            return {
+              value: ip,
+              label: (
+                <Box>
+                  <Text fontSize="xs" as="kbd" color="gray.500">
+                    {ip}
+                  </Text>
+                  <Text fontSize="xs" as="b" color="gray.700" m={2}>
+                    -
+                  </Text>
+                  <Badge as="kbd" colorScheme="orange">
+                    {count}
+                  </Badge>
+                </Box>
+              ),
+            };
+          })}
+          placeholder="Select Some IP Ranges..."
+          size="md"
+          closeMenuOnSelect={false}
+        />
+      </FormControl>
       <HStack width="100%" justifyContent="center">
         <Badge colorScheme="orange">
           IP Count:{" "}
@@ -302,7 +381,7 @@ const IPsInput = ({
             colorScheme="orange"
             height="16px"
             width="100%"
-            hasStripe
+            hasStripe={isSubmitted}
             value={progress}
             borderRadius={20}
             isAnimated={true}
@@ -363,6 +442,7 @@ function randomizeElements(arr: string[]) {
   return shuffledList;
 }
 
+// 0.0.0.0/16 0.0.0.0/18
 function cidrToIpArray(cidr: string): string[] {
   const parts = cidr.split("/");
   const ip = parts[0];
@@ -416,4 +496,20 @@ function sampleFromDistribution<T>(list: T[], weights: number[]): T {
 
   // This line should never be reached, but just in case...
   return list[0];
+}
+
+function generateRandomHexCodeColor(): string {
+  const hexValues = "0123456789ABCDEF";
+  let color = "#";
+  for (let i = 0; i < 6; i++) {
+    color += hexValues[Math.floor(Math.random() * 16)];
+  }
+  console.log(color);
+  return color;
+}
+
+function isCIDRFormat(input: string): boolean {
+  const cidrRegex =
+    /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/(?:[0-9]|[1-2][0-9]|3[0-2])$/;
+  return cidrRegex.test(input);
 }
