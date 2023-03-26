@@ -149,7 +149,8 @@ const IPsInput = ({
     const validMutex = new Mutex();
     const allMutex = new Mutex();
     let validIps: { ip: string; time: number }[] = [];
-    const weights: number[] = ips.map((a) => Math.sqrt(cidrToIpCount(a)));
+    let tested_ips: string[] = [];
+    const weights: number[] = ips.map((a) => cidrToIpCount(a) ** 0.2);
     const sum = ips
       .map((a) => cidrToIpCount(a))
       .reduce((acc, cur) => acc + cur, 0);
@@ -158,9 +159,20 @@ const IPsInput = ({
 
     async function testIps() {
       for (let i = 0; i < sum; i++) {
-        const ip_range = cidrToIpArray(sampleFromDistribution(ips, weights));
-        const ip = ip_range[Math.floor(Math.random() * ip_range.length)];
+        let ip_range = cidrToIpArray(sampleFromDistribution(ips, weights));
+        ip_range = ip_range.length > 1 ? ip_range.slice(1) : ip_range;
+
+        let ip = ip_range[Math.floor(Math.random() * ip_range.length)];
+
+        for (let repeat = 0; repeat < 100; repeat++) {
+          if (!tested_ips.includes(ip)) {
+            break;
+          }
+          ip = ip_range[Math.floor(Math.random() * ip_range.length)];
+        }
+
         const result = await testIp(ip, timeout, pingCount);
+        tested_ips.push(ip);
 
         await allMutex.runExclusive(async () => {
           setTestedIPCount((prevCount) => Math.max(prevCount + 1, i + 1));
@@ -213,7 +225,7 @@ const IPsInput = ({
         <GridItem area={"uk"} alignItems="center" justifyContent="center">
           <Tooltip label="If ON, it will only use the uk datacenter IPs. otherwise you should specify the ips & ip ranges yourself.">
             <Text as="b" color="gray.600">
-              Use All UK IPs?
+              Use All Default IPs?
             </Text>
           </Tooltip>
           <Switch
@@ -478,7 +490,7 @@ function cidrToIpCount(cidr: string): number {
     return 1;
   }
   const ipCount = Math.pow(2, 32 - mask);
-  return ipCount;
+  return ipCount - 1;
 }
 
 function sampleFromDistribution<T>(list: T[], weights: number[]): T {
