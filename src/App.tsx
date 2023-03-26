@@ -11,7 +11,7 @@ function App() {
       <Box width="100%" minHeight="10vh" height="20%">
         <VStack width="100%" alignItems="center" justifyContent="center">
           <Image
-            src="https://visitor-badge.feriirawann.repl.co?username=nalbekink&repo=v2Cloud&color=F6AD55&label=Visited"
+            src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FNalbekink%2FV2ray-Cloudflare&count_bg=%23DD6B20&title_bg=%234A4A4A&icon=&icon_color=%23E7E7E7&title=Visited&edge_flat=true"
             alt="Visitors Count"
             m={5}
           />
