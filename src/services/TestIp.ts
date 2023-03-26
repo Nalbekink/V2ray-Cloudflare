@@ -2,7 +2,7 @@ import axios, { CancelToken, AxiosError } from "axios";
 
 async function testIp(ip: string, timeout: number = 2500, count: number = 5) {
   const url: string = `https://${ip}/`;
-  let startTime = null;
+  let startTime: number = 0;
   let successfulRequests: number = 0;
   const delay_rate = 1.2;
 
