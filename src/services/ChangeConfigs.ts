@@ -19,7 +19,7 @@ function changeConfigs(
 
   const weights: number[] = softmin(cleanIPs.map((a) => a.time / 500));
   const ips: string[] = cleanIPs.map((a) => a.ip);
-
+  const total_count = count;
   let newConfigs: string = "";
   while (count > 0 && max > 0) {
     let currentConfig: Record<any, any> = {
@@ -46,9 +46,12 @@ function changeConfigs(
           conf.fp = useragents[Math.floor(Math.random() * useragents.length)];
           conf.alpn = alpns[Math.floor(Math.random() * alpns.length)];
           conf.ps =
+            `${total_count - count + 1}-` +
             "Nalbekink" +
             "-" +
             "vmess" +
+            "-" +
+            conf.net +
             "-" +
             conf.fp +
             (conf.alpn != "" ? "-" + conf.alpn : "");
@@ -86,9 +89,12 @@ function changeConfigs(
             "?" +
             serializeQuery(conf) +
             "#" +
+            `${total_count - count + 1}-` +
             "Nalbekink" +
             "-" +
             protocol_type +
+            "-" +
+            conf.type +
             "-" +
             conf.fp +
             (conf.alpn != "" ? "-" + conf.alpn : "");
@@ -100,14 +106,12 @@ function changeConfigs(
         }
       } else {
         console.log("Config Settings Invalid for Changing...");
-        console.log(currentConfig);
         max--;
       }
     } else {
       console.log(
         "Config is either not on https ports or its type is not ws/grpc"
       );
-      console.log(currentConfig);
       max--;
     }
   }

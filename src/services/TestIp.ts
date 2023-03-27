@@ -1,18 +1,26 @@
 import axios, { CancelToken, AxiosError } from "axios";
 import getCountryInfo from "./GetCountry";
-
 async function testIp(ip: string, timeout: number = 2500, count: number = 5) {
-  const url: string = `http://${ip}/cdn-cgi/trace/`;
-  const startTime = performance.now();
+  const url: string = `http://${ip}/cdn-cgi/trace?${Math.random()}`;
+  let startTime: number = 0;
   let successfulRequests: number = 0;
-  let countryInfo: Record<string, string> = {};
+  const delay_rate = 1.1;
+  let countryInfo: Record<string, string> = {
+    city: "?",
+    country: "?",
+    alphaCode2: "?",
+    alphaCode3: "?",
+  };
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i <= count; i++) {
+    if (i == 1) {
+      startTime = performance.now();
+    }
     try {
       const source = axios.CancelToken.source();
       const response = await axios.get(url, {
         cancelToken: source.token,
-        timeout: timeout,
+        timeout: i == 0 ? 2 * delay_rate * timeout : delay_rate * timeout,
       });
       successfulRequests += 1;
       if (successfulRequests == 1) {
@@ -25,9 +33,9 @@ async function testIp(ip: string, timeout: number = 2500, count: number = 5) {
     }
   }
 
-  const duration = performance.now() - startTime;
+  const duration = (performance.now() - startTime) / delay_rate;
 
-  if (successfulRequests === count) {
+  if (successfulRequests === count + 1) {
     return { ip: ip, time: Math.floor(duration / count), region: countryInfo };
   } else {
     return null;
